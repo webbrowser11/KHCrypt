@@ -1,0 +1,5 @@
+pycryptodome>=3.19.0
+psutil>=5.9.0
+pyudev>=0.24.0  # For Linux USB detection
+wmi>=1.5.1      # For Windows USB detection
+python-dotenv>=1.0.0 
