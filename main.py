@@ -10,6 +10,7 @@ from typing import Optional, List, Dict
 import psutil
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
 
 from config import *
@@ -39,25 +40,31 @@ class USBDetector:
                 logging.error(f"Error loading registered USBs: {e}")
 
     def encrypt_data(self, data: bytes) -> bytes:
-        """Encrypt data using AES-256."""
+        """Encrypt data using AES-256. (Better though 😎)"""
         if not ENCRYPTION_KEY:
             raise ValueError("Encryption key not set")
         
-        key = ENCRYPTION_KEY.encode().ljust(32)[:32]
+        key = SHA256.new(ENCRYPTION_KEY.encode()).digest()
         cipher = AES.new(key, AES.MODE_CBC)
         ct_bytes = cipher.encrypt(pad(data, AES.block_size))
         return cipher.iv + ct_bytes
 
     def decrypt_data(self, encrypted_data: bytes) -> bytes:
-        """Decrypt data using AES-256."""
+        """Decrypt data using AES-256. Same thing 😎"""
         if not ENCRYPTION_KEY:
-            raise ValueError("Encryption key not set")
+            raise ValueError("Encryption key not set")  
+        if len(encrypted_data) < 16:
+            raise ValueError("Invalid encrypted data (too short)")
         
-        key = ENCRYPTION_KEY.encode().ljust(32)[:32]
+        key = SHA256.new(ENCRYPTION_KEY.encode()).digest()
         iv = encrypted_data[:16]
         ct = encrypted_data[16:]
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        return unpad(cipher.decrypt(ct), AES.block_size)
+        cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    
+        try:
+            return unpad(cipher.decrypt(ct), AES.block_size)
+        except ValueError as e:
+            raise ValueError("Decryption failed - possibly corrupt data") from e
 
     def get_usb_uuid(self, device_path: str) -> Optional[str]:
         """Get UUID of a USB device."""
