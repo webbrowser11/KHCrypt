@@ -130,7 +130,7 @@ class USBDetector:
                 if self.verify_usb(device):
                     self.unlock_system()
                 else:
-                    logging.warning(f"Unauthorized USB device detected: {device}")
+                    logging.warning(f"Unauthorized or Unsecure USB device detected: {device}")
             
             # Check for removed devices
             removed_devices = previous_devices - current_devices
